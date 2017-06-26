@@ -1,0 +1,12 @@
+# Logs
+logs
+*.log
+
+*.txt
+
+*.sqlite3
+
+*.sublime-project
+*.sublime-workspace
+.vscode/
+.idea/
