@@ -9,24 +9,21 @@ from spiders.hotel_spider import HotelSpider
 @shared_task
 def crawl(url):
     process = CrawlerProcess()
-    num = url[-12:-5]
-    process.crawl(HotelSpider, START_URL=url, HOTEL_NUM=num)
+    process.crawl(HotelSpider, START_URL=url)
     process.start()
 
 
 @shared_task
 def crawl_machine1(url):
     process = CrawlerProcess()
-    num = url[-12:-5]
-    process.crawl(HotelSpider, START_URL=url, HOTEL_NUM=num)
+    process.crawl(HotelSpider, START_URL=url)
     process.start()
 
 
 @shared_task
 def crawl_machine2(url):
     process = CrawlerProcess()
-    num = url[-12:-5]
-    process.crawl(HotelSpider, START_URL=url, HOTEL_NUM=num)
+    process.crawl(HotelSpider, START_URL=url)
     process.start()
 
 

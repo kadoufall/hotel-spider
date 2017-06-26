@@ -20,6 +20,7 @@ import requests
 import traceback
 
 import time
+import os
 
 
 class HotelSpider(Spider):
@@ -44,15 +45,18 @@ class HotelSpider(Spider):
     dianping_root = r"http://hotels.ctrip.com/hotel/dianping/"
     dianping = r"http://hotels.ctrip.com/hotel/dianping/%s.html" % hotel_num
 
-    def __init__(self, HOTEL_NUM=None, *args, **kwargs):
+    def __init__(self, START_URL=None, *args, **kwargs):
         super(HotelSpider, self).__init__(*args, **kwargs)
-        self.start_urls = [
-            r"http://hotels.ctrip.com/hotel/%s.html" % HOTEL_NUM]
-        self.hotel_num = HOTEL_NUM
-        self.dianping = r"http://hotels.ctrip.com/hotel/dianping/%s.html" % HOTEL_NUM
-        self.log = r"hotel-%s.txt" % HOTEL_NUM
-        self.commentLog = r"comment-%s.txt" % HOTEL_NUM
-
+        if START_URL.find("ctrip")!=-1:   # 携程
+            num = START_URL[-12:-5]
+            self.start_urls = [r"http://hotels.ctrip.com/hotel/%s.html" % num]
+            self.hotel_num = num
+            self.dianping = r"http://hotels.ctrip.com/hotel/dianping/%s.html" % num
+            self.log = r"hotel-%s.txt" % num
+            self.commentLog = r"comment-%s.txt" % num
+        elif START_URL.find("elong")!=-1:     # 艺龙
+            pass
+            
     # default crawl function
     def parse_elong(self, response):
         browser = webdriver.Firefox()
@@ -123,13 +127,17 @@ class HotelSpider(Spider):
 
         # 存入数据库
         # 如果正在爬取则取消当前任务
-        temCrawlWebsite = CrawlWebsite.objects.get_or_create(url=self.start_urls[0])
-        if temCrawlWebsite[1] and temCrawlWebsite[0].lock:
-            return
+        newCrawlWebsite = CrawlWebsite.objects.get_or_create(url=self.start_urls[0])
+        
+        if newCrawlWebsite[1]==False and newCrawlWebsite[0].lock:
+            browser.quit()
+            os._exit()
 
-        newCrawlWebsite = CrawlWebsite(
-            url=self.start_urls[0], desc=title, lock=True, done=False, lastest_time=localtime)
-        newCrawlWebsite.save()
+        newCrawlWebsite[0].desc = title
+        newCrawlWebsite[0].lock = True
+        newCrawlWebsite[0].done = False
+        newCrawlWebsite[0].lastest_time = localtime
+        newCrawlWebsite[0].save()
 
         '''print "title:", title
         #CrawlWebsite.objects.all().delete()
@@ -244,9 +252,9 @@ class HotelSpider(Spider):
         self.parse_comments(self.dianping, browser, title)
 
         # 完成爬取
-        newCrawlWebsite.lock = False
-        newCrawlWebsite.done = True
-        newCrawlWebsite.save()
+        newCrawlWebsite[0].lock = False
+        newCrawlWebsite[0].done = True
+        newCrawlWebsite[0].save()
 
         '''
         with open(self.log, 'w') as f:
