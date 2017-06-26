@@ -122,8 +122,13 @@ class HotelSpider(Spider):
         localtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
         # 存入数据库
+        # 如果正在爬取则取消当前任务
+        temCrawlWebsite = CrawlWebsite.objects.get_or_create(url=self.start_urls[0])
+        if temCrawlWebsite[1] and temCrawlWebsite[0].lock:
+            return
+
         newCrawlWebsite = CrawlWebsite(
-            url=self.start_urls[0], desc=title, lock=False, done=False, lastest_time=localtime)
+            url=self.start_urls[0], desc=title, lock=True, done=False, lastest_time=localtime)
         newCrawlWebsite.save()
 
         '''print "title:", title
@@ -237,6 +242,11 @@ class HotelSpider(Spider):
         # parse user's information
 
         self.parse_comments(self.dianping, browser, title)
+
+        # 完成爬取
+        newCrawlWebsite.lock = False
+        newCrawlWebsite.done = True
+        newCrawlWebsite.save()
 
         '''
         with open(self.log, 'w') as f:
